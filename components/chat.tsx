@@ -73,6 +73,7 @@ export function Chat({
             message: messages.at(-1),
             selectedChatModel: initialChatModel,
             selectedVisibilityType: visibilityType,
+            selectedPersonaId: personaId || undefined,
             ...body,
           },
         };
@@ -96,6 +97,7 @@ export function Chat({
 
   const searchParams = useSearchParams();
   const query = searchParams.get('query');
+  const personaId = searchParams.get('persona');
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 

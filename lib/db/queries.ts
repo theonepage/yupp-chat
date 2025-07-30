@@ -27,6 +27,8 @@ import {
   type DBMessage,
   type Chat,
   stream,
+  persona,
+  type Persona,
 } from './schema';
 import { embeddingQueue } from '../jobs/embedding-queue';
 import { embeddingConfig } from '../config/embeddings';
@@ -87,11 +89,13 @@ export async function saveChat({
   userId,
   title,
   visibility,
+  personaId,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
+  personaId?: string;
 }) {
   try {
     return await db.insert(chat).values({
@@ -100,6 +104,7 @@ export async function saveChat({
       userId,
       title,
       visibility,
+      personaId,
     });
   } catch (error) {
     console.log('Error saving chat:', error);
@@ -545,6 +550,181 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get stream ids by chat id',
+    );
+  }
+}
+
+export async function getChatWithPersona(id: string) {
+  try {
+    const result = await db
+      .select({
+        chat: chat,
+        persona: persona,
+      })
+      .from(chat)
+      .leftJoin(persona, eq(chat.personaId, persona.id))
+      .where(eq(chat.id, id))
+      .limit(1);
+
+    if (!result.length) return null;
+
+    return {
+      ...result[0].chat,
+      persona: result[0].persona || undefined,
+    };
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get chat with persona',
+    );
+  }
+}
+
+export async function getPersonaById(id: string): Promise<Persona | null> {
+  try {
+    const result = await db
+      .select()
+      .from(persona)
+      .where(eq(persona.id, id))
+      .limit(1);
+
+    return result[0] || null;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get persona by id',
+    );
+  }
+}
+
+export async function getAllActivePersonas(): Promise<Persona[]> {
+  try {
+    return await db
+      .select()
+      .from(persona)
+      .where(eq(persona.isActive, true))
+      .orderBy(persona.name);
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get personas',
+    );
+  }
+}
+
+export async function createPersona({
+  name,
+  description,
+  systemPrompt,
+  avatar,
+  color,
+  createdBy,
+}: {
+  name: string;
+  description?: string;
+  systemPrompt: string;
+  avatar?: string;
+  color?: string;
+  createdBy: string;
+}): Promise<Persona> {
+  try {
+    const [newPersona] = await db
+      .insert(persona)
+      .values({
+        name,
+        description,
+        systemPrompt,
+        avatar,
+        color,
+        createdBy,
+      })
+      .returning();
+
+    return newPersona;
+  } catch (error) {
+    console.log('Error creating persona:', error);
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to create persona',
+    );
+  }
+}
+
+export async function updatePersona({
+  id,
+  name,
+  description,
+  systemPrompt,
+  avatar,
+  color,
+  isActive,
+  userId,
+}: {
+  id: string;
+  name?: string;
+  description?: string;
+  systemPrompt?: string;
+  avatar?: string;
+  color?: string;
+  isActive?: boolean;
+  userId: string;
+}): Promise<Persona | null> {
+  try {
+    const updateData: any = { updatedAt: new Date() };
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (systemPrompt !== undefined) updateData.systemPrompt = systemPrompt;
+    if (avatar !== undefined) updateData.avatar = avatar;
+    if (color !== undefined) updateData.color = color;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    const [updatedPersona] = await db
+      .update(persona)
+      .set(updateData)
+      .where(
+        and(
+          eq(persona.id, id),
+          eq(persona.createdBy, userId)
+        )
+      )
+      .returning();
+
+    return updatedPersona || null;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to update persona',
+    );
+  }
+}
+
+export async function deletePersona({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<boolean> {
+  try {
+    const [deletedPersona] = await db
+      .update(persona)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(persona.id, id),
+          eq(persona.createdBy, userId)
+        )
+      )
+      .returning();
+
+    return !!deletedPersona;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to delete persona',
     );
   }
 }

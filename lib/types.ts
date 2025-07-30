@@ -6,7 +6,7 @@ import type { requestSuggestions } from './ai/tools/request-suggestions';
 import type { InferUITool, UIMessage } from 'ai';
 
 import type { ArtifactKind } from '@/components/artifact';
-import type { Suggestion } from './db/schema';
+import type { Suggestion, Persona, Chat } from './db/schema';
 
 export type DataPart = { type: 'append-message'; message: string };
 
@@ -54,4 +54,17 @@ export interface Attachment {
   name: string;
   url: string;
   contentType: string;
+}
+
+export interface PersonaInfo {
+  id: string;
+  name: string;
+  description?: string;
+  systemPrompt: string;
+  avatarUrl?: string;
+  isActive: boolean;
+}
+
+export interface ChatWithPersona extends Chat {
+  persona?: Persona;
 }

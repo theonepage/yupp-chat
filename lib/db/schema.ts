@@ -21,6 +21,21 @@ export const user = pgTable('User', {
 
 export type User = InferSelectModel<typeof user>;
 
+export const persona = pgTable('personas', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  name: varchar('name', { length: 100 }).notNull().default(''),
+  description: text('description').notNull().default(''),
+  systemPrompt: text('system_prompt').notNull().default(''),
+  avatar: varchar('avatar', { length: 10 }).notNull().default('🤖'),
+  color: varchar('color', { length: 50 }).notNull().default('bg-blue-500'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdBy: uuid('created_by').references(() => user.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type Persona = InferSelectModel<typeof persona>;
+
 export const chat = pgTable('Chat', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
   createdAt: timestamp('createdAt').notNull(),
@@ -31,6 +46,7 @@ export const chat = pgTable('Chat', {
   visibility: varchar('visibility', { enum: ['public', 'private'] })
     .notNull()
     .default('private'),
+  personaId: uuid('persona_id').references(() => persona.id),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
