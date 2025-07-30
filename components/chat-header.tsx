@@ -78,7 +78,7 @@ function PureChatHeader({
         <Link
           href="/personas"
         >
-          <BotIcon size={16} />
+          <BotIcon />
           Try Personas
         </Link>
       </Button>
