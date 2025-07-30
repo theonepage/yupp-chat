@@ -28,6 +28,8 @@ import {
   type Chat,
   stream,
 } from './schema';
+import { embeddingQueue } from '../jobs/embedding-queue';
+import { embeddingConfig } from '../config/embeddings';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
 import { generateHashedPassword } from './utils';
@@ -214,7 +216,16 @@ export async function saveMessages({
   messages: Array<DBMessage>;
 }) {
   try {
-    return await db.insert(message).values(messages);
+    const result = await db.insert(message).values(messages);
+    
+    // Auto-generate embeddings based on configuration
+    if (embeddingConfig.autoGenerate && embeddingConfig.mode === 'queue') {
+      for (const msg of messages) {
+        embeddingQueue.enqueue(msg.id, 'normal');
+      }
+    }
+    
+    return result;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to save messages');
   }

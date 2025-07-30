@@ -1,0 +1,1 @@
+ALTER TABLE "message_embeddings" ADD CONSTRAINT "message_embeddings_message_id_unique" UNIQUE("message_id");

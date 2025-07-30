@@ -34,6 +34,8 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 8,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
+  /* Global setup */
+  globalSetup: './tests/playwright.setup.ts',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -53,7 +55,7 @@ export default defineConfig({
   projects: [
     {
       name: 'e2e',
-      testMatch: /e2e\/.*.test.ts/,
+      testMatch: /e2e\/(?!.*embedding).*\.test\.ts/,
       use: {
         ...devices['Desktop Chrome'],
       },
@@ -64,6 +66,14 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
       },
+    },
+    {
+      name: 'embedding-tests',
+      testMatch: /e2e\/.*embedding.*\.test\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+      timeout: 120 * 1000, // Longer timeout for embedding tests
     },
 
     // {
@@ -99,7 +109,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'pnpm dev',
+    command: 'cp .env.test .env.local && pnpm dev',
     url: `${baseURL}/ping`,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,

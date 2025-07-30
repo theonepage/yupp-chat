@@ -9,6 +9,8 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  integer,
+  vector,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -168,3 +170,27 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// Message embeddings for vector search
+export const messageEmbedding = pgTable('message_embeddings', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  messageId: uuid('message_id').notNull().unique().references(() => message.id, { onDelete: 'cascade' }),
+  embedding: vector('embedding', { dimensions: 1536 }),
+  contentHash: varchar('content_hash', { length: 64 }).notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type MessageEmbedding = InferSelectModel<typeof messageEmbedding>;
+
+// Search sessions for caching and analytics
+export const searchSession = pgTable('search_sessions', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => user.id),
+  query: text('query').notNull(),
+  queryEmbedding: vector('query_embedding', { dimensions: 1536 }),
+  resultCount: integer('result_count').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type SearchSession = InferSelectModel<typeof searchSession>;

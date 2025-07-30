@@ -50,6 +50,20 @@
       "when": 1746118166211,
       "tag": "0006_marvelous_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1753860624125,
+      "tag": "0007_wide_mentallo",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1753874632428,
+      "tag": "0008_complete_wendell_rand",
+      "breakpoints": true
     }
   ]
 }
