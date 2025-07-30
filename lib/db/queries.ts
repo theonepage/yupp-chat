@@ -102,6 +102,7 @@ export async function saveChat({
       visibility,
     });
   } catch (error) {
+    console.log('Error saving chat:', error);
     throw new ChatSDKError('bad_request:database', 'Failed to save chat');
   }
 }
